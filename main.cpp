@@ -1,0 +1,93 @@
+//
+//  main.cpp
+//  Project 3 (DA)
+//
+//  Created by Apple on 28/10/23.
+//
+
+#include <iostream>
+#include <bits/stdc++.h> //dont use this if running on XCODE
+using namespace std;
+using namespace std::chrono; // Include the chrono library for time measurement
+
+class Box {
+public:
+    int length;
+    int width;
+    int height;
+};
+
+// A memoization array to store computed results
+int dp[500];
+
+int findMaxHeight(vector<Box>& boxes, int bottom_box_index, int index) {
+    if (index < 0)
+        return 0;
+
+    if (dp[index] != -1)
+        return dp[index];
+
+    int maximumHeight = 0;
+
+    for (int i = index; i >= 0; i--) {
+        if (bottom_box_index == -1 || (boxes[i].length < boxes[bottom_box_index].length && boxes[i].width < boxes[bottom_box_index].width))
+            maximumHeight = max(maximumHeight, findMaxHeight(boxes, i, i - 1) + boxes[i].height);
+    }
+
+    return dp[index] = maximumHeight;
+}
+
+int maxStackHeight(int height[], int width[], int length[], int types) {
+    vector<Box> boxes;
+    memset(dp, -1, sizeof(dp));
+    Box box;
+
+    for (int i = 0; i < types; i++) {
+        box.height = height[i];
+        box.length = max(length[i], width[i]);
+        box.width = min(length[i], width[i]);
+        boxes.push_back(box);
+
+        box.height = width[i];
+        box.length = max(length[i], height[i]);
+        box.width = min(length[i], height[i]);
+        boxes.push_back(box);
+
+        box.height = length[i];
+        box.length = max(width[i], height[i]);
+        box.width = min(width[i], height[i]);
+        boxes.push_back(box);
+    }
+
+    sort(boxes.begin(), boxes.end(), [](Box b1, Box b2) {
+        return (b1.length * b1.width) < (b2.length * b2.width);
+    });
+
+    return findMaxHeight(boxes, -1, boxes.size() - 1);
+}
+
+int main() {
+    int n;
+    cout << "Please enter the number of boxes: ";
+    cin >> n;
+    int length[n];
+    int width[n];
+    int height[n];
+
+    cout << "Please enter the length, width, and height of each box:" << endl;
+    for (int i = 0; i < n; i++) {
+        cout << "Box " << i + 1 << " dimensions: ";
+        cin >> length[i] >> width[i] >> height[i];
+    }
+
+    // Measure execution time
+    auto start = high_resolution_clock::now(); // Start the timer
+    int maxHeight = maxStackHeight(height, length, width, n);
+    auto stop = high_resolution_clock::now(); // Stop the timer
+
+    auto duration = duration_cast<nanoseconds>(stop - start);
+    cout << "The maximum possible height of a stack is " << maxHeight << endl;
+    cout << "Execution time: " << duration.count() << " nanoseconds" << endl;
+
+    return 0;
+}
